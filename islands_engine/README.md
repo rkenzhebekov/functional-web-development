@@ -1,4 +1,3 @@
-Just adding stupid string
 # IslandsEngine
 
 **TODO: Add description**
