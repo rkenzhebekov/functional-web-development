@@ -1,9 +1,11 @@
 defmodule IslandsEngine.Game do
-  use GenServer
+
+  use GenServer, start: {__MODULE__, :start_link, []}, restart: :transient
 
   alias IslandsEngine.{Board, Coordinate, Guesses, Island, Rules}
 
   @players [:player1, :player2]
+  @timeout 60 * 60 * 24 * 1000
 
   def via_tuple(name), do: {:via, Registry, {Registry.Game, name}}
 
@@ -30,7 +32,7 @@ defmodule IslandsEngine.Game do
   def init(name) do
     player1 = %{name: name, board: Board.new(), guesses: Guesses.new()}
     player2 = %{name: nil, board: Board.new(), guesses: Guesses.new()}
-    {:ok, %{player1: player1, player2: player2, rules: %Rules{}}}
+    {:ok, %{player1: player1, player2: player2, rules: %Rules{}}, @timeout}
   end
 
   def handle_call({:add_player, name}, _from, state) do
@@ -99,6 +101,10 @@ defmodule IslandsEngine.Game do
      end
   end
 
+  def handle_info(:timeout, state) do
+    {:stop, {:shutdown, :timeout}, state}
+  end
+
   defp update_guesses(state, player, hit_or_miss, coordinate) do
     update_in(state[player].guesses, fn guesses -> Guesses.add(guesses, hit_or_miss, coordinate) end)
   end
@@ -110,7 +116,7 @@ defmodule IslandsEngine.Game do
 
   defp update_rules(state, rules),         do: %{state | rules: rules}
 
-  defp reply_success(state, reply),        do: {:reply, reply, state}
+  defp reply_success(state, reply),        do: {:reply, reply, state, @timeout}
 
   defp update_board(state, player, board), do: Map.update!(state, player, fn player -> %{player | board: board} end)
 
