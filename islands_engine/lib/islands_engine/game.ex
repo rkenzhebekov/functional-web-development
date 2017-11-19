@@ -79,7 +79,7 @@ defmodule IslandsEngine.Game do
      do
        state
        |> update_rules(rules)
-       |> reply_success(:ok)
+       |> reply_success({:ok, board})
      else
       :error -> {:reply, :error, state}
       false  -> {:reply, {:error, :not_all_islands_positioned}, state}
